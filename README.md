@@ -1,1 +1,1 @@
-# rust_todolistcli
+# Todo-list CLI
