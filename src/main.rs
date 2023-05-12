@@ -12,11 +12,6 @@ use csv::WriterBuilder;
 
 
 fn main() -> Result<(), io::Error> {
-    // WORKS!
-    // copy_without("hello");
-    // copy_without("again");
-    // copy_without("andagain");
-
     loop {
         let input = get_input("Enter command: ")?;
         parse_input(input)?;
@@ -30,7 +25,6 @@ struct Task<'a> {
 }
 
 fn parse_input(arg: String) -> Result<(), io::Error> {
-    // dbg!(&arg);
     match arg.trim() {
         "add" => add_task()?,
         "complete" => complete_task()?,
@@ -51,18 +45,13 @@ fn get_input(with_guide: &str) -> Result<String, io::Error> {
 }
 
 fn add_task() -> Result<(), io::Error> {
-    // println!();
     let task_result = get_input("Enter the name of the task:")?;
     let task = task_result.trim().to_owned() + "\n";
 
     let file_content = fs::read_to_string(Path::new("src/todos.csv"))?;
     let file = open_file()?;
-    // let file_content = fs::read_to_string(Path::new("src/todos.csv"))?;
     let mut writer = LineWriter::new(file);
     
-    // dbg!(file_content.clone());
-    // dbg!(file_content.clone() + &task);
-    // file_content + &task;
     writer.write_all((file_content + &task).as_bytes())?;
 
     Ok(())
@@ -71,7 +60,6 @@ fn add_task() -> Result<(), io::Error> {
 fn complete_task() -> Result<(), io::Error> {
     let task_name = get_input("Enter the task to be marked complete:")?;
 
-    // Bufferize file and copy it back to todos.csv until the offending line is read, which is skipped, following the continuation of the copying
     bufferize()?;
     copy_without(&task_name)?;
 
@@ -87,7 +75,6 @@ fn list_tasks() -> Result<(), io::Error> {
         task_list_vector.push(task);
     }
 
-    // dbg!(task_list_vector);
     Ok(())
 }
 
@@ -108,7 +95,6 @@ fn copy_without(task_name: &String) -> Result<(), io::Error> {
         let unwrap_line = line?;
         let true_instance = StringRecord::from(vec![format!("{}", task_name.trim().to_owned())]);
         let false_instance = StringRecord::from(vec![format!("{}", task_name.trim().to_owned())]);
-        // dbg!(&unwrap_line);
 
         if &unwrap_line != &true_instance && &unwrap_line != &false_instance {
             let task: Task = Task { title: &unwrap_line[0] };
