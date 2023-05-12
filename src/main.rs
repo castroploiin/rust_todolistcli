@@ -17,11 +17,11 @@ fn main() -> Result<(), io::Error> {
     // copy_without("again");
     // copy_without("andagain");
 
-    let input = get_input("Enter command: ")?;
-    parse_input(input)?;
-    list_tasks()?;
-
-    Ok(())
+    loop {
+        let input = get_input("Enter command: ")?;
+        parse_input(input)?;
+        list_tasks()?;
+    }
 }
 
 #[derive(serde::Serialize)]
@@ -35,6 +35,7 @@ fn parse_input(arg: String) -> Result<(), io::Error> {
         "add" => add_task()?,
         "complete" => complete_task()?,
         "list" => list_tasks()?,
+        "quit" => std::process::exit(69),
         _ => return Ok(())
     }
 
@@ -107,7 +108,7 @@ fn copy_without(task_name: &String) -> Result<(), io::Error> {
         let unwrap_line = line?;
         let true_instance = StringRecord::from(vec![format!("{}", task_name.trim().to_owned())]);
         let false_instance = StringRecord::from(vec![format!("{}", task_name.trim().to_owned())]);
-        dbg!(&unwrap_line);
+        // dbg!(&unwrap_line);
 
         if &unwrap_line != &true_instance && &unwrap_line != &false_instance {
             let task: Task = Task { title: &unwrap_line[0] };
