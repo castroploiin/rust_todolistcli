@@ -25,7 +25,6 @@ fn parse_input(arg: String) -> Result<(), io::Error> {
         "quit" => std::process::exit(69),
         _ => return Ok(())
     }
-
     Ok(())
 }
  
