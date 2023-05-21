@@ -61,7 +61,6 @@ fn add_task() -> Result<(), io::Error> {
 fn complete_task() -> Result<(), io::Error> {
     let task_name = get_input("Enter the task to be marked complete:")?;
 
-    // Bufferize file and copy it back to todos.csv until the offending line is read, which is skipped, following the continuation of the copying
     bufferize()?;
     copy_without(Some(&task_name))?;
 
