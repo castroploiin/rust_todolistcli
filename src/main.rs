@@ -12,15 +12,9 @@ use csv::WriterBuilder;
 
 
 fn main() -> Result<(), io::Error> {
-    // WORKS!
-    // copy_without("hello");
-    // copy_without("again");
-    // copy_without("andagain");
-
     loop {
         let input = get_input("Enter command: ")?;
         parse_input(input)?;
-        list_tasks()?;
     }
 }
 
@@ -30,10 +24,11 @@ struct Task<'a> {
 }
 
 fn parse_input(arg: String) -> Result<(), io::Error> {
-    // dbg!(&arg);
     match arg.trim() {
         "add" => add_task()?,
         "complete" => complete_task()?,
+        "clear" => clear_tasks()?,
+        "restore" => restore_tasks()?,
         "list" => list_tasks()?,
         "quit" => std::process::exit(69),
         _ => return Ok(())
@@ -41,7 +36,7 @@ fn parse_input(arg: String) -> Result<(), io::Error> {
 
     Ok(())
 }
-
+ 
 fn get_input(with_guide: &str) -> Result<String, io::Error> {
     println!("{}", with_guide);
     let mut input = String::new();
@@ -51,18 +46,13 @@ fn get_input(with_guide: &str) -> Result<String, io::Error> {
 }
 
 fn add_task() -> Result<(), io::Error> {
-    // println!();
     let task_result = get_input("Enter the name of the task:")?;
     let task = task_result.trim().to_owned() + "\n";
 
     let file_content = fs::read_to_string(Path::new("src/todos.csv"))?;
     let file = open_file()?;
-    // let file_content = fs::read_to_string(Path::new("src/todos.csv"))?;
     let mut writer = LineWriter::new(file);
     
-    // dbg!(file_content.clone());
-    // dbg!(file_content.clone() + &task);
-    // file_content + &task;
     writer.write_all((file_content + &task).as_bytes())?;
 
     Ok(())
@@ -73,10 +63,21 @@ fn complete_task() -> Result<(), io::Error> {
 
     // Bufferize file and copy it back to todos.csv until the offending line is read, which is skipped, following the continuation of the copying
     bufferize()?;
-    copy_without(&task_name)?;
+    copy_without(Some(&task_name))?;
 
-    println!("Task '{}' marked as complete", &task_name.trim());
+    println!("Task '{}' marked as complete\n", &task_name.trim());
     Ok(())
+}
+
+fn clear_tasks() -> Result<(), io::Error> {
+    bufferize()?;
+    fs::File::create(Path::new("src/todos.csv"))?;
+
+    Ok(())
+}
+
+fn restore_tasks() -> Result<(), io::Error> {
+    copy_without(None)
 }
 
 fn list_tasks() -> Result<(), io::Error> {
@@ -84,10 +85,16 @@ fn list_tasks() -> Result<(), io::Error> {
     let mut task_list_vector: Vec<&str> = Vec::new();
 
     for task in task_list.split('\n') {
-        task_list_vector.push(task);
+        if task != "" && task != "title" {
+            task_list_vector.push(task);
+        }
     }
 
-    // dbg!(task_list_vector);
+    println!("Tasks:");
+    for task in task_list_vector {
+        println!("{}", task)
+    }
+
     Ok(())
 }
 
@@ -99,20 +106,32 @@ fn bufferize() -> Result<(), io::Error> {
     Ok(())
 }
 
-fn copy_without(task_name: &String) -> Result<(), io::Error> {
-    bufferize()?;
-    let mut buffer_file = Reader::from_path(Path::new("src/buffer.csv"))?;
-    let mut todo_file = WriterBuilder::new().from_path(Path::new("src/todos.csv"))?;
-
-    for line in buffer_file.records() {
-        let unwrap_line = line?;
-        let true_instance = StringRecord::from(vec![format!("{}", task_name.trim().to_owned())]);
-        let false_instance = StringRecord::from(vec![format!("{}", task_name.trim().to_owned())]);
-        // dbg!(&unwrap_line);
-
-        if &unwrap_line != &true_instance && &unwrap_line != &false_instance {
-            let task: Task = Task { title: &unwrap_line[0] };
-            todo_file.serialize(task)?;
+fn copy_without(task_name: Option<&String>) -> Result<(), io::Error> {
+    match task_name {
+        Some(task) => {
+            let mut buffer_file = Reader::from_path(Path::new("src/buffer.csv"))?;
+            let mut todo_file = WriterBuilder::new().from_path(Path::new("src/todos.csv"))?;
+            
+            for line in buffer_file.records() {
+                let unwrap_line = line?;
+                let true_instance = StringRecord::from(vec![format!("{}", task.trim().to_owned())]);
+                let false_instance = StringRecord::from(vec![format!("{}", task.trim().to_owned())]);
+        
+                if &unwrap_line != &true_instance && &unwrap_line != &false_instance {
+                    let task: Task = Task { title: &unwrap_line[0] };
+                    todo_file.serialize(task)?;
+                }
+            }
+        },
+        None => {
+            let mut buffer_file = Reader::from_path(Path::new("src/buffer.csv"))?;
+            let mut todo_file = WriterBuilder::new().from_path(Path::new("src/todos.csv"))?;
+            
+            for line in buffer_file.records() {
+                let unwrap_line = line?;   
+                let task: Task = Task { title: &unwrap_line[0] };
+                todo_file.serialize(task)?;
+            }
         }
     }
 
@@ -127,7 +146,6 @@ fn open_file() -> Result<fs::File, std::io::Error> {
             return file
         },
         false => {
-            // fs::File::create(file_path)?;
             let file = fs::File::create(file_path);
 
             return file
