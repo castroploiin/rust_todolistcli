@@ -1,15 +1,7 @@
 use std::fs;
-
-use std::io;
-use std::io::LineWriter;
-use std::io::Write;
+use std::io::{self, LineWriter, Write};
 use std::path::Path;
-
-use csv::Reader;
-use csv::StringRecord;
-
-use csv::WriterBuilder;
-
+use csv::{Reader, StringRecord, WriterBuilder};
 
 fn main() -> Result<(), io::Error> {
     loop {
